@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+  <title>Workfront Pro — Trade Coordination Platform</title>
+  <style>
+    /* ---------- RESET & BASE ---------- */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+    }
+    a, button { cursor: pointer; }
+    /* ---------- SIDEBAR ---------- */
+    .sidebar {
+      width: 260px;
+      background: #0f172a;
+      color: #e2e8f0;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: transform 0.3s ease;
+      z-index: 100;
+    }
+    .sidebar-brand {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar-brand span { color: #f97316; }
+    .sidebar-nav { flex: 1; }
+    .sidebar-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 4px;
+      color: #94a3b8;
+      font-weight: 500;
+      font-size: 14px;
+      transition: 0.15s;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+    }
+    .sidebar-nav-item:hover { background: #1e293b; color: #f1f5f9; }
+    .sidebar-nav-item.active { background: #1e293b; color: #f97316; }
+    .sidebar-nav-item .badge {
+      margin-left: auto;
+      background: #dc2626;
+      color: white;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 40px;
+      font-weight: 600;
+    }
+    .sidebar-footer {
+      border-top: 1px solid #1e293b;
+      padding-top: 16px;
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 12px;
+    }
+    .sidebar-footer strong { color: #e2e8f0; }
+
+    /* ---------- MAIN CONTENT ---------- */
+    .main {
+      flex: 1;
+      padding: 24px 32px 80px;
+      overflow-y: auto;
+      background: #f1f5f9;
+    }
+    .main-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .main-header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.3px; }
+    .main-header .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: white;
+      padding: 8px 16px 8px 20px;
+      border-radius: 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .user-badge .avatar {
+      width: 36px; height: 36px;
+      background: #f97316;
+      border-radius: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .user-badge .role-tag {
+      background: #f1f5f9;
+      padding: 2px 12px;
+      border-radius: 40px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+    }
+    .hamburger { display: none; background: none; border: none; font-size: 28px; color: #0f172a; }
+
+    /* ---------- ROLE PICKER OVERLAY ---------- */
+    #rolePicker {
+      position: fixed; inset: 0; background: #0f172a; z-index: 999;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px; flex-direction: column;
+    }
+    #rolePicker .picker-box {
+      background: white; border-radius: 32px; padding: 32px;
+      max-width: 440px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    #rolePicker h2 { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+    #rolePicker p { color: #64748b; margin-bottom: 20px; }
+    #rolePicker input {
+      width: 100%; padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 14px;
+      font-size: 16px; margin-bottom: 16px; background: #f8fafc;
+    }
+    #rolePicker input:focus { outline: none; border-color: #f97316; box-shadow: 0 0 0 4px rgba(249,115,22,0.1); }
+    .role-option {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 18px; border-radius: 16px;
+      border: 2px solid transparent; background: #f8fafc;
+      margin-bottom: 8px; cursor: pointer; transition: 0.15s;
+    }
+    .role-option:active { transform: scale(0.97); }
+    .role-option:hover { border-color: #f97316; background: #fef2f2; }
+    .role-option .emoji { font-size: 28px; width: 44px; }
+    .role-option .label { font-weight: 600; font-size: 16px; }
+    .role-option .sub { font-size: 13px; color: #64748b; }
+
+    /* ---------- SCREENS ---------- */
+    .screen { display: none; animation: fadeUp 0.3s ease; }
+    .screen.active { display: block; }
+    @keyframes fadeUp { from { opacity:0.3; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+
+    /* ---------- CARDS & WIDGETS ---------- */
+    .card {
+      background: white; border-radius: 20px; padding: 20px 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 18px;
+      border: 1px solid #e9edf2;
+    }
+    .card-title { font-weight: 700; font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 18px; }
+    .stat-card { text-align: center; padding: 16px; background: #f8fafc; border-radius: 16px; }
+    .stat-card .number { font-size: 32px; font-weight: 800; }
+    .stat-card .label { font-size: 13px; color: #64748b; margin-top: 2px; }
+
+    /* ---------- ESTATE MAP ---------- */
+    .estate-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 12px;
+    }
+    .unit-card {
+      background: white; border-radius: 16px; padding: 16px 12px;
+      border-left: 6px solid #94a3b8; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      cursor: pointer; transition: 0.15s; text-align: center;
+    }
+    .unit-card:active { transform: scale(0.96); }
+    .unit-card .unit-num { font-weight: 700; font-size: 18px; }
+    .unit-card .unit-trade { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .unit-card .unit-status { font-size: 11px; font-weight: 600; margin-top: 6px; padding: 2px 10px; border-radius: 40px; display: inline-block; }
+    .status-green { border-left-color: #22c55e; } .status-green .unit-status { background: #dcfce7; color: #166534; }
+    .status-red { border-left-color: #ef4444; } .status-red .unit-status { background: #fee2e2; color: #991b1b; }
+    .status-yellow { border-left-color: #eab308; } .status-yellow .unit-status { background: #fef3c7; color: #92400e; }
+    .status-blue { border-left-color: #3b82f6; } .status-blue .unit-status { background: #dbeafe; color: #1e40af; }
+
+    /* ---------- BADGES ---------- */
+    .badge { padding: 4px 12px; border-radius: 40px; font-size: 12px; font-weight: 600; display: inline-block; }
+    .badge-ready { background: #dcfce7; color: #166534; }
+    .badge-blocked { background: #fee2e2; color: #991b1b; }
+    .badge-progress { background: #fef3c7; color: #92400e; }
+    .badge-approved { background: #dbeafe; color: #1e40af; }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+
+    /* ---------- BUTTONS ---------- */
+    .btn-primary {
+      background: #f97316; color: white; padding: 12px 24px;
+      border-radius: 60px; font-weight: 700; border: none;
+      transition: 0.15s; font-size: 14px; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(249,115,22,0.3);
+    }
+    .btn-primary:active { transform: scale(0.96); background: #ea580c; }
+    .btn-outline { background: transparent; border: 2px solid #e2e8f0; padding: 10px 20px; border-radius: 60px; font-weight: 600; transition: 0.15s; cursor: pointer; }
+    .btn-outline:active { background: #f1f5f9; }
+    .btn-sm { padding: 6px 16px; font-size: 13px; }
+    .btn-approve { background: #22c55e; color: white; border: none; padding: 8px 18px; border-radius: 40px; font-weight: 600; cursor: pointer; }
+    .btn-reject { background: #ef4444; color: white; border: none; padding: 8px 18px; border-radius: 40px; font-weight: 600; cursor: pointer; }
+    .btn-rework { background: #eab308; color: #422006; border: none; padding: 8px 18px; border-radius: 40px; font-weight: 600; cursor: pointer; }
+    .btn-approve:active, .btn-reject:active, .btn-rework:active { transform: scale(0.94); }
+
+    /* ---------- MODAL ---------- */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(15,23,42,0.5); backdrop-filter: blur(4px);
+      z-index: 200; display: none; justify-content: center; align-items: center; padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: white; max-width: 500px; width: 100%; border-radius: 28px;
+      padding: 28px; max-height: 90vh; overflow-y: auto; animation: fadeUp 0.25s ease;
+    }
+    .modal-box h3 { font-size: 22px; font-weight: 700; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .modal-box label { font-weight: 600; font-size: 14px; display: block; margin-top: 14px; color: #1e293b; }
+    .modal-box input, .modal-box select, .modal-box textarea {
+      width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 14px;
+      font-size: 15px; margin-top: 4px; background: #f8fafc;
+    }
+    .modal-box input:focus, .modal-box select:focus, .modal-box textarea:focus {
+      outline: none; border-color: #f97316; box-shadow: 0 0 0 4px rgba(249,115,22,0.1);
+    }
+    .modal-box textarea { resize: vertical; min-height: 80px; }
+    .modal-close { font-size: 28px; cursor: pointer; color: #94a3b8; background: none; border: none; }
+
+    /* ---------- TOAST ---------- */
+    #toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+      background: #0f172a; color: white; padding: 14px 32px;
+      border-radius: 60px; font-weight: 600; z-index: 300;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3); display: none;
+      animation: slideUp 0.4s ease; font-size: 15px;
+    }
+    #toast.show { display: block; }
+    @keyframes slideUp { from { opacity:0; transform: translate(-50%, 20px); } to { opacity:1; transform: translate(-50%, 0); } }
+
+    /* ---------- NOTIFICATION CENTRE ---------- */
+    .notif-item { padding: 12px 0; border-bottom: 1px solid #e9edf2; display: flex; gap: 12px; align-items: flex-start; }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-dot { width: 8px; height: 8px; border-radius: 40px; background: #f97316; flex-shrink: 0; margin-top: 6px; }
+    .notif-time { font-size: 12px; color: #94a3b8; }
+
+    /* ---------- ATTENDANCE TABLE ---------- */
+    .attendance-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .attendance-table th { text-align: left; padding: 10px 8px; border-bottom: 2px solid #e9edf2; color: #475569; font-weight: 600; }
+    .attendance-table td { padding: 10px 8px; border-bottom: 1px solid #f1f5f9; }
+
+    /* ---------- ANALYTICS CHARTS (simple bar) ---------- */
+    .chart-bar-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .chart-bar-label { width: 100px; font-size: 13px; font-weight: 500; }
+    .chart-bar-track { flex: 1; height: 20px; background: #e9edf2; border-radius: 40px; overflow: hidden; }
+    .chart-bar-fill { height: 100%; border-radius: 40px; transition: width 0.6s ease; }
+    .chart-bar-value { width: 40px; font-size: 13px; font-weight: 600; text-align: right; }
+
+    /* ---------- FILE LIST ---------- */
+    .file-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+    .file-item:last-child { border-bottom: none; }
+
+    /* ---------- RESPONSIVE ---------- */
+    @media (max-width: 1024px) {
+      .sidebar { transform: translateX(-100%); position: fixed; width: 280px; height: 100vh; }
+      .sidebar.open { transform: translateX(0); }
+      .hamburger { display: block; }
+      .main { padding: 16px; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .estate-grid { grid-template-columns: repeat(auto-fill, minmax(100px,1fr)); }
+      .main-header h1 { font-size: 20px; }
+      .main-header .user-badge { padding: 6px 12px 6px 16px; font-size: 13px; }
+      .card { padding: 16px; }
+      .modal-box { padding: 20px; }
+    }
+
+    /* scrollbar */
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: #334155; border-radius: 40px; }
+  </style>
+</head>
+<body>
+
+<!-- ========== ROLE PICKER ========== -->
+<div id="rolePicker">
+  <div class="picker-box">
+    <h2>🏗️ Workfront Pro</h2>
+    <p>Construction trade coordination · Estate Phase 2</p>
+    <input type="text" id="userNameInput" placeholder="Your full name" />
+    <div onclick="selectRole('subcontractor')" class="role-option"><span class="emoji">👷</span><div><div class="label">Subcontractor</div><div class="sub">I do the work</div></div></div>
+    <div onclick="selectRole('foreman')" class="role-option"><span class="emoji">🦺</span><div><div class="label">Foreman</div><div class="sub">I supervise & approve</div></div></div>
+    <div onclick="selectRole('supervisor')" class="role-option"><span class="emoji">🔍</span><div><div class="label">Supervisor</div><div class="sub">I inspect & assist</div></div></div>
+    <div onclick="selectRole('pm')" class="role-option"><span class="emoji">🏢</span><div><div class="label">Project Manager</div><div class="sub">I oversee everything</div></div></div>
+    <div onclick="selectRole('qs')" class="role-option"><span class="emoji">📋</span><div><div class="label">Quantity Surveyor</div><div class="sub">I track costs & delays</div></div></div>
+    <p style="margin-top:16px;font-size:12px;color:#94a3b8;">⚡ Built by T. Phophi</p>
+  </div>
+</div>
+
+<!-- ========== TOAST ========== -->
+<div id="toast"></div>
+
+<!-- ========== SIDEBAR ========== -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-brand">🏗️ Workfront <span>Pro</span></div>
+  <div class="sidebar-nav">
+    <button class="sidebar-nav-item active" data-screen="screenEstate" onclick="navigateTo('screenEstate')">📋 Estate Overview</button>
+    <button class="sidebar-nav-item" data-screen="screenTradeDash" onclick="navigateTo('screenTradeDash')">👷 Trade Dashboard</button>
+    <button class="sidebar-nav-item" data-screen="screenApprovals" onclick="navigateTo('screenApprovals')">🕵️ Approvals <span class="badge" id="approvalBadge">0</span></button>
+    <button class="sidebar-nav-item" data-screen="screenDelays" onclick="navigateTo('screenDelays')">🚨 Delay Reports</button>
+    <button class="sidebar-nav-item" data-screen="screenAttendance" onclick="navigateTo('screenAttendance')">📋 Attendance</button>
+    <button class="sidebar-nav-item" data-screen="screenNotifications" onclick="navigateTo('screenNotifications')">🔔 Notifications <span class="badge" id="notifBadge">0</span></button>
+    <button class="sidebar-nav-item" data-screen="screenAnalytics" onclick="navigateTo('screenAnalytics')">📊 Analytics</button>
+    <button class="sidebar-nav-item" data-screen="screenFiles" onclick="navigateTo('screenFiles')">📁 Files</button>
+    <button class="sidebar-nav-item" onclick="logoutUser()" style="margin-top:12px;color:#94a3b8;">🚪 Switch User</button>
+  </div>
+  <div class="sidebar-footer">Workfront Pro v1.0 · <strong>T. Phophi</strong></div>
+</nav>
+
+<!-- ========== MAIN ========== -->
+<div class="main">
+  <div class="main-header">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <h1 id="pageTitle">Estate Overview</h1>
+    </div>
+    <div class="user-badge">
+      <span id="userNameDisplay">User</span>
+      <span class="role-tag" id="userRoleDisplay">Role</span>
+      <span class="avatar" id="userAvatar">U</span>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN: ESTATE OVERVIEW ===== -->
+  <div id="screenEstate" class="screen active">
+    <div class="grid-3" style="margin-bottom:18px;">
+      <div class="stat-card"><div class="number" id="statReady">0</div><div class="label">✅ Ready Units</div></div>
+      <div class="stat-card"><div class="number" id="statBlocked">0</div><div class="label">🚫 Blocked Units</div></div>
+      <div class="stat-card"><div class="number" id="statInProgress">0</div><div class="label">🔄 In Progress</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🏘️ Estate Map — Blocks A, B, C</div>
+      <div class="estate-grid" id="estateGrid"></div>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN: TRADE DASHBOARD ===== -->
+  <div id="screenTradeDash" class="screen">
+    <div class="card">
+      <div class="card-title">👷 My Trades</div>
+      <select id="tradeFilter" onchange="renderTradeDash()" style="padding:10px 16px;border:2px solid #e2e8f0;border-radius:14px;font-size:14px;background:white;margin-bottom:16px;width:100%;max-width:240px;">
+        <option>Painting</option><option>Tiling</option><option>Electrical</option><option>Plumbing</option><option>Plastering</option><option>Ceiling</option><option>Joinery</option><option>Cupboards</option><option>Waterproofing</option><option>Cleaning</option>
+      </select>
+      <div id="tradeDashContent"></div>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN: APPROVALS ===== -->
+  <div id="screenApprovals" class="screen">
+    <div class="card"><div class="card-title">🕵️ Pending Approvals</div><div id="approvalList"></div></div>
+  </div>
+
+  <!-- ===== SCREEN: DELAYS ===== -->
+  <div id="screenDelays" class="screen">
+    <div class="card">
+      <div class="card-title">🚨 Report Delay</div>
+      <select id="delayUnit" style="padding:12px 16px;border:2px solid #e2e8f0;border-radius:14px;width:100%;margin-bottom:10px;"><option>Unit 1</option><option>Unit 2</option><option>Unit 3</option><option>Unit 4</option><option>Unit 5</option><option>Unit 6</option><option>Unit 7</option><option>Unit 8</option><option>Unit 9</option><option>Unit 10</option><option>Unit 11</option><option>Unit 12</option><option>Unit 13</option><option>Unit 14</option><option>Unit 15</option><option>Unit 16</option><option>Unit 17</option><option>Unit 18</option><option>Unit 19</option><option>Unit 20</option><option>Unit 21</option><option>Unit 22</option><option>Unit 23</option><option>Unit 24</option><option>Unit 25</option><option>Unit 26</option><option>Unit 27</option><option>Unit 28</option><option>Unit 29</option><option>Unit 30</option></select>
+      <select id="delayType" style="padding:12px 16px;border:2px solid #e2e8f0;border-radius:14px;width:100%;margin-bottom:10px;">
+        <option>Material Shortage</option><option>Trade Clash</option><option>Labour Shortage</option><option>Defect</option><option>Inspection Delay</option><option>Design Issue</option><option>Safety Issue</option><option>Access Restriction</option><option>Equipment Breakdown</option><option>Weather Delay</option><option>Other</option>
+      </select>
+      <textarea id="delayComment" placeholder="Describe the issue..." style="padding:12px 16px;border:2px solid #e2e8f0;border-radius:14px;width:100%;min-height:80px;margin-bottom:10px;"></textarea>
+      <button class="btn-primary" onclick="submitDelay()">🚨 Submit Delay Report</button>
+    </div>
+    <div class="card"><div class="card-title">📋 Recent Delays</div><div id="delayList"></div></div>
+  </div>
+
+  <!-- ===== SCREEN: ATTENDANCE ===== -->
+  <div id="screenAttendance" class="screen">
+    <div class="card">
+      <div class="card-title">📋 Check In / Check Out</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+        <input type="text" id="attName" placeholder="Worker name" style="flex:1;padding:12px 16px;border:2px solid #e2e8f0;border-radius:14px;" />
+        <input type="text" id="attTrade" placeholder="Trade" style="flex:1;padding:12px 16px;border:2px solid #e2e8f0;border-radius:14px;" />
+        <input type="text" id="attUnit" placeholder="Unit" style="flex:1;padding:12px 16px;border:2px solid #e2e8f0;border-radius:14px;" />
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-primary" onclick="checkIn()" style="flex:1;">✅ Check In</button>
+        <button class="btn-outline" onclick="checkOut()" style="flex:1;">🚪 Check Out</button>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">📋 Today's Attendance</div><div id="attendanceTable"></div></div>
+  </div>
+
+  <!-- ===== SCREEN: NOTIFICATIONS ===== -->
+  <div id="screenNotifications" class="screen">
+    <div class="card"><div class="card-title">🔔 Notifications</div><div id="notifList"></div></div>
+  </div>
+
+  <!-- ===== SCREEN: ANALYTICS ===== -->
+  <div id="screenAnalytics" class="screen">
+    <div class="grid-2">
+      <div class="card"><div class="card-title">📊 Delay Causes</div><div id="delayChart"></div></div>
+      <div class="card"><div class="card-title">⏱️ Idle Labour Hours</div><div id="idleChart"></div></div>
+    </div>
+    <div class="grid-3">
+      <div class="stat-card"><div class="number" id="analyticsReady">0</div><div class="label">✅ Ready</div></div>
+      <div class="stat-card"><div class="number" id="analyticsBlocked">0</div><div class="label">🚫 Blocked</div></div>
+      <div class="stat-card"><div class="number" id="analyticsComplete">0</div><div class="label">✔️ Completed</div></div>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN: FILES ===== -->
+  <div id="screenFiles" class="screen">
+    <div class="card">
+      <div class="card-title">📁 Project Files</div>
+      <div style="display:flex;gap:10px;margin-bottom:16px;">
+        <input type="text" id="fileNameInput" placeholder="File name (e.g. Drawing A1)" style="flex:1;padding:12px 16px;border:2px solid #e2e8f0;border-radius:14px;" />
+        <button class="btn-primary btn-sm" onclick="addFile()">➕ Create</button>
+      </div>
+      <div id="fileList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL: Unit Details ========== -->
+<div class="modal-overlay" id="unitModal">
+  <div class="modal-box">
+    <h3><span id="modalUnitTitle">Unit 1</span> <button class="modal-close" onclick="closeUnitModal()">✕</button></h3>
+    <div id="unitDetailContent"></div>
+  </div>
+</div>
+
+<!-- ========== MODAL: Complete Activity ========== -->
+<div class="modal-overlay" id="completeModal">
+  <div class="modal-box">
+    <h3>✔️ Complete Activity <button class="modal-close" onclick="closeCompleteModal()">✕</button></h3>
+    <label>Unit</label><select id="compUnit"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option></select>
+    <label>Trade</label><select id="compTrade"><option>Painting</option><option>Tiling</option><option>Electrical</option><option>Plumbing</option><option>Plastering</option><option>Ceiling</option><option>Joinery</option><option>Cupboards</option><option>Waterproofing</option><option>Cleaning</option></select>
+    <label>Notes</label><textarea id="compNotes" placeholder="Any comments..."></textarea>
+    <label>Photo (simulated)</label>
+    <div style="border:2px dashed #e2e8f0;border-radius:14px;padding:20px;text-align:center;color:#94a3b8;cursor:pointer;" onclick="document.getElementById('compPhoto').click()">📸 Tap to upload photo</div>
+    <input type="file" id="compPhoto" style="display:none;" />
+    <button class="btn-primary" style="margin-top:16px;" onclick="submitCompletion()">✅ Mark Complete</button>
+  </div>
+</div>
+
+<script>
+// ========================================================================
+//  WORKFRONT PRO — FULL JAVASCRIPT ENGINE
+// ========================================================================
+
+// ---------- STATE ----------
+let currentUser = { name: '', role: '' };
+let units = [];
+let trades = ['Painting','Tiling','Electrical','Plumbing','Plastering','Ceiling','Joinery','Cupboards','Waterproofing','Cleaning'];
+let pendingApprovals = [];
+let delayReports = [];
+let attendance = [];
+let notifications = [];
+let files = JSON.parse(localStorage.getItem('wfp_files')) || [];
+let unitStatuses = {}; // { unit: { trade: 'Ready'|'Progress'|'Blocked'|'Complete'|'Approved' } }
+
+// ---------- SEED DATA ----------
+function seedData() {
+  for (let i = 1; i <= 30; i++) {
+    unitStatuses[i] = {};
+    trades.forEach(t => {
+      let s = 'Ready';
+      if (i >= 20 && i <= 23 && (t === 'Painting' || t === 'Tiling')) s = 'Blocked';
+      if (i >= 25 && i <= 27 && t === 'Electrical') s = 'Blocked';
+      if (i === 5 && t === 'Plastering') s = 'Approved';
+      if (i === 5 && t === 'Plumbing') s = 'Approved';
+      if (i === 5 && t === 'Painting') s = 'Ready';
+      if (i === 8 && t === 'Tiling') s = 'Progress';
+      if (i === 8 && t === 'Electrical') s = 'Blocked';
+      if (i === 12 && t === 'Plastering') s = 'Complete';
+      if (i === 12 && t === 'Painting') s = 'Pending';
+      if (i === 15 && t === 'Plumbing') s = 'Approved';
+      if (i === 15 && t === 'Ceiling') s = 'Ready';
+      if (i === 18 && t === 'Joinery') s = 'Blocked';
+      if (i === 22 && t === 'Waterproofing') s = 'Progress';
+      if (i === 28 && t === 'Cleaning') s = 'Ready';
+      // make some random progress
+      if (i > 10 && i < 14 && t === 'Plastering') s = 'Approved';
+      if (i > 14 && i < 17 && t === 'Tiling') s = 'Approved';
+      unitStatuses[i][t] = s;
+    });
+  }
+
+  // pending approvals
+  pendingApprovals = [
+    { unit: 12, trade: 'Painting', notes: 'Completed all walls', user: 'Sipho' },
+    { unit: 18, trade: 'Joinery', notes: 'Cupboards installed', user: 'Thabo' },
+    { unit: 22, trade: 'Waterproofing', notes: 'Roof and walls done', user: 'Nomsa' },
+  ];
+
+  delayReports = [
+    { unit: 20, type: 'Material Shortage', comment: 'Tiles delayed from supplier', date: '2026-06-22' },
+    { unit: 25, type: 'Trade Clash', comment: 'Painter and electrician overlap', date: '2026-06-22' },
+    { unit: 8, type: 'Inspection Delay', comment: 'Waiting for QS sign-off', date: '2026-06-21' },
+    { unit: 27, type: 'Labour Shortage', comment: 'No tilers available', date: '2026-06-20' },
+  ];
+
+  attendance = [
+    { name: 'Sipho M.', trade: 'Painting', unit: '12', time: '08:15', status: 'In' },
+    { name: 'Thabo K.', trade: 'Joinery', unit: '18', time: '07:50', status: 'In' },
+    { name: 'Nomsa D.', trade: 'Waterproofing', unit: '22', time: '09:00', status: 'In' },
+  ];
+
+  notifications = [
+    { text: 'Unit 12 is ready for Painting approval.', time: '10 min ago', read: false },
+    { text: 'Material shortage reported in Unit 20.', time: '25 min ago', read: false },
+    { text: 'Unit 8 awaiting inspection.', time: '1 hour ago', read: false },
+    { text: 'Foreman meeting at 14:00 in site office.', time: '2 hours ago', read: true },
+    { text: 'Unit 15 Plumbing approved.', time: '3 hours ago', read: true },
+  ];
+}
+seedData();
+
+// ---------- HELPERS ----------
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function getUnitStatus(unit) {
+  const st = unitStatuses[unit] || {};
+  let ready = 0, total = 0;
+  trades.forEach(t => {
+    if (st[t]) total++;
+    if (st[t] === 'Approved' || st[t] === 'Ready') ready++;
+  });
+  return { ready, total, percent: total > 0 ? Math.round((ready / total) * 100) : 0 };
+}
+
+function getUnitColor(unit) {
+  const st = unitStatuses[unit] || {};
+  let hasBlocked = false, hasProgress = false, allReady = true;
+  trades.forEach(t => {
+    const s = st[t];
+    if (s === 'Blocked') hasBlocked = true;
+    if (s === 'Progress' || s === 'Pending') hasProgress = true;
+    if (s !== 'Approved' && s !== 'Ready') allReady = false;
+  });
+  if (hasBlocked) return 'red';
+  if (hasProgress) return 'blue';
+  if (allReady && trades.every(t => st[t] === 'Approved' || st[t] === 'Ready')) return 'green';
+  return 'yellow';
+}
+
+function getTradeStatus(unit, trade) {
+  return unitStatuses[unit]?.[trade] || 'Ready';
+}
+
+function setTradeStatus(unit, trade, status) {
+  if (!unitStatuses[unit]) unitStatuses[unit] = {};
+  unitStatuses[unit][trade] = status;
+}
+
+function addNotification(text) {
+  notifications.unshift({ text, time: 'Just now', read: false });
+  updateNotifBadge();
+  renderNotifications();
+}
+
+function updateNotifBadge() {
+  const unread = notifications.filter(n => !n.read).length;
+  document.getElementById('notifBadge').textContent = unread;
+  document.getElementById('notifBadge').style.display = unread > 0 ? 'inline' : 'none';
+}
+updateNotifBadge();
+
+function updateApprovalBadge() {
+  document.getElementById('approvalBadge').textContent = pendingApprovals.length;
+  document.getElementById('approvalBadge').style.display = pendingApprovals.length > 0 ? 'inline' : 'none';
+}
+updateApprovalBadge();
+
+// ---------- ROLE PICKER ----------
+function selectRole(role) {
+  const name = document.getElementById('userNameInput').value.trim();
+  if (!name) { showToast('🙏 Please enter your name'); return; }
+  currentUser.name = name;
+  currentUser.role = role;
+  localStorage.setItem('wfp_user', JSON.stringify(currentUser));
+  document.getElementById('rolePicker').style.display = 'none';
+  initApp();
+}
+
+function loadUser() {
+  const saved = localStorage.getItem('wfp_user');
+  if (saved) {
+    try { currentUser = JSON.parse(saved); return true; } catch(e){}
+  }
+  return false;
+}
+
+function logoutUser() {
+  localStorage.removeItem('wfp_user');
+  location.reload();
+}
+
+function initApp() {
+  document.getElementById('userNameDisplay').textContent = currentUser.name;
+  document.getElementById('userRoleDisplay').textContent = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
+  document.getElementById('userAvatar').textContent = currentUser.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+
+  // Role-based sidebar visibility
+  const role = currentUser.role;
+  const hidden = ['subcontractor','supervisor','qs'].includes(role);
+  const approvalBtn = document.querySelector('[data-screen="screenApprovals"]');
+  if (role === 'foreman' || role === 'pm') {
+    approvalBtn.style.display = 'flex';
+  } else {
+    approvalBtn.style.display = 'none';
+  }
+
+  // Show first screen
+  navigateTo('screenEstate');
+  renderAll();
+}
+
+// ---------- NAVIGATION ----------
+function navigateTo(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
+  document.querySelectorAll('.sidebar-nav-item').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`[data-screen="${screenId}"]`);
+  if (btn) btn.classList.add('active');
+  document.getElementById('sidebar').classList.remove('open');
+
+  const titles = {
+    screenEstate: 'Estate Overview',
+    screenTradeDash: 'Trade Dashboard',
+    screenApprovals: 'Approvals',
+    screenDelays: 'Delay Reports',
+    screenAttendance: 'Attendance',
+    screenNotifications: 'Notifications',
+    screenAnalytics: 'Analytics',
+    screenFiles: 'Files'
+  };
+  document.getElementById('pageTitle').textContent = titles[screenId] || 'Workfront Pro';
+  renderAll();
+}
+
+// ---------- RENDER ALL ----------
+function renderAll() {
+  renderEstate();
+  renderTradeDash();
+  renderApprovals();
+  renderDelays();
+  renderAttendance();
+  renderNotifications();
+  renderAnalytics();
+  renderFiles();
+}
+
+// ---------- ESTATE OVERVIEW ----------
+function renderEstate() {
+  const grid = document.getElementById('estateGrid');
+  let html = '';
+  let ready=0, blocked=0, inprog=0;
+  for (let i = 1; i <= 30; i++) {
+    const color = getUnitColor(i);
+    const st = unitStatuses[i] || {};
+    const activeTrade = trades.find(t => st[t] === 'Progress' || st[t] === 'Pending') || 'Ready';
+    if (color === 'green') ready++;
+    else if (color === 'red') blocked++;
+    else if (color === 'blue') inprog++;
+    const cls = `unit-card status-${color}`;
+    html += `<div class="${cls}" onclick="openUnitModal(${i})">
+      <div class="unit-num">Unit ${i}</div>
+      <div class="unit-trade">${activeTrade}</div>
+      <div class="unit-status">${color.toUpperCase()}</div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+  document.getElementById('statReady').textContent = ready;
+  document.getElementById('statBlocked').textContent = blocked;
+  document.getElementById('statInProgress').textContent = inprog;
+}
+
+// ---------- UNIT DETAILS MODAL ----------
+function openUnitModal(unit) {
+  document.getElementById('unitModal').classList.add('open');
+  document.getElementById('modalUnitTitle').textContent = `Unit ${unit}`;
+  const st = unitStatuses[unit] || {};
+  const readiness = getUnitStatus(unit);
+  let html = `<p><strong>Readiness:</strong> ${readiness.percent}%</p>
+    <div style="background:#e9edf2;height:10px;border-radius:40px;margin:8px 0 16px;overflow:hidden;">
+      <div style="background:#f97316;height:100%;width:${readiness.percent}%;border-radius:40px;transition:width 0.4s;"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:14px;margin-bottom:12px;">
+      <span><strong>Ready:</strong> ${readiness.ready}</span>
+      <span><strong>Total:</strong> ${readiness.total}</span>
+    </div>
+    <table style="width:100%;font-size:13px;border-collapse:collapse;">
+      <tr style="background:#f1f5f9;"><th style="text-align:left;padding:6px;">Trade</th><th style="text-align:left;padding:6px;">Status</th></tr>`;
+  trades.forEach(t => {
+    const s = st[t] || '—';
+    const badge = s === 'Approved' ? 'badge-approved' : s === 'Blocked' ? 'badge-blocked' : s === 'Ready' ? 'badge-ready' : s === 'Progress' ? 'badge-progress' : s === 'Pending' ? 'badge-pending' : '';
+    html += `<tr><td style="padding:4px;">${t}</td><td style="padding:4px;"><span class="badge ${badge}">${s}</span></td></tr>`;
+  });
+  html += `</table>`;
+  // Add history
+  html += `<div style="margin-top:14px;"><strong>📜 History</strong><div style="font-size:13px;color:#64748b;">Plastering: Completed 10 Jun · Electrical: Approved 12 Jun</div></div>`;
+  document.getElementById('unitDetailContent').innerHTML = html;
+}
+
+function closeUnitModal() { document.getElementById('unitModal').classList.remove('open'); }
+
+// ---------- TRADE DASHBOARD ----------
+function renderTradeDash() {
+  const filter = document.getElementById('tradeFilter').value;
+  const container = document.getElementById('tradeDashContent');
+  let avail = [], blocked = [], upcoming = [];
+  for (let u = 1; u <= 30; u++) {
+    const s = getTradeStatus(u, filter);
+    if (s === 'Ready' || s === 'Approved') avail.push(u);
+    else if (s === 'Blocked') blocked.push(u);
+    else if (s === 'Progress' || s === 'Pending') upcoming.push(u);
+  }
+  let html = `<h4 style="font-weight:700;color:#22c55e;margin:12px 0 6px;">✅ AVAILABLE NOW (${avail.length})</h4>`;
+  if (!avail.length) html += '<p style="color:#94a3b8;font-size:14px;">None ready</p>';
+  avail.slice(0,8).forEach(u => {
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:10px 14px;border-radius:14px;margin-bottom:6px;">
+      <span><strong>Unit ${u}</strong> <span class="badge badge-ready">${getTradeStatus(u,filter)}</span></span>
+      <button class="btn-primary btn-sm" onclick="openCompleteModal(${u},'${filter}')">✔️ Done</button>
+    </div>`;
+  });
+  html += `<h4 style="font-weight:700;color:#ef4444;margin:16px 0 6px;">🚫 BLOCKED (${blocked.length})</h4>`;
+  if (!blocked.length) html += '<p style="color:#94a3b8;font-size:14px;">None blocked</p>';
+  blocked.slice(0,8).forEach(u => {
+    const reason = delayReports.find(d => d.unit == u)?.type || 'Waiting';
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;background:#fef2f2;padding:10px 14px;border-radius:14px;margin-bottom:6px;border-left:4px solid #ef4444;">
+      <span><strong>Unit ${u}</strong> <span class="badge badge-blocked">${reason}</span></span>
+    </div>`;
+  });
+  html += `<h4 style="font-weight:700;color:#eab308;margin:16px 0 6px;">⏳ UPCOMING (${upcoming.length})</h4>`;
+  if (!upcoming.length) html += '<p style="color:#94a3b8;font-size:14px;">None upcoming</p>';
+  upcoming.slice(0,8).forEach(u => {
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;background:#fefce8;padding:10px 14px;border-radius:14px;margin-bottom:6px;border-left:4px solid #eab308;">
+      <span><strong>Unit ${u}</strong> <span class="badge badge-progress">${getTradeStatus(u,filter)}</span></span>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+// ---------- COMPLETE ACTIVITY MODAL ----------
+function openCompleteModal(unit, trade) {
+  document.getElementById('compUnit').value = unit;
+  document.getElementById('compTrade').value = trade;
+  document.getElementById('completeModal').classList.add('open');
+}
+function closeCompleteModal() { document.getElementById('completeModal').classList.remove('open'); }
+
+function submitCompletion() {
+  const unit = parseInt(document.getElementById('compUnit').value);
+  const trade = document.getElementById('compTrade').value;
+  const notes = document.getElementById('compNotes').value;
+  if (!unit || !trade) { showToast('Please select unit and trade'); return; }
+  setTradeStatus(unit, trade, 'Pending');
+  pendingApprovals.push({ unit, trade, notes: notes || 'Work completed', user: currentUser.name });
+  addNotification(`Unit ${unit} ${trade} submitted for approval by ${currentUser.name}.`);
+  showToast(`✅ ${trade} on Unit ${unit} submitted for approval`);
+  document.getElementById('compNotes').value = '';
+  closeCompleteModal();
+  updateApprovalBadge();
+  renderAll();
+}
+
+// ---------- APPROVALS ----------
+function renderApprovals() {
+  const container = document.getElementById('approvalList');
+  if (!pendingApprovals.length) {
+    container.innerHTML = '<p style="color:#94a3b8;padding:20px 0;">🎉 No pending approvals</p>';
+    return;
+  }
+  let html = '';
+  pendingApprovals.forEach((p, i) => {
+    html += `<div style="background:#f8fafc;border-radius:16px;padding:16px;margin-bottom:12px;border-left:4px solid #eab308;">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;">
+        <span><strong>Unit ${p.unit}</strong> · ${p.trade}</span>
+        <span style="color:#64748b;font-size:13px;">by ${p.user}</span>
+      </div>
+      <p style="font-size:14px;color:#475569;margin:6px 0 10px;">${p.notes}</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-approve" onclick="approveWork(${i})">✅ Approve</button>
+        <button class="btn-rework" onclick="reworkWork(${i})">🔄 Rework</button>
+        <button class="btn-reject" onclick="rejectWork(${i})">❌ Reject</button>
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function approveWork(idx) {
+  if (currentUser.role !== 'foreman' && currentUser.role !== 'pm') {
+    showToast('⛔ Only Foreman or PM can approve!');
+    return;
+  }
+  const p = pendingApprovals[idx];
+  setTradeStatus(p.unit, p.trade, 'Approved');
+  addNotification(`Unit ${p.unit} ${p.trade} approved by ${currentUser.name}.`);
+  showToast(`✅ ${p.trade} on Unit ${p.unit} Approved`);
+  pendingApprovals.splice(idx, 1);
+  updateApprovalBadge();
+  renderAll();
+}
+function reworkWork(idx) {
+  if (currentUser.role !== 'foreman' && currentUser.role !== 'pm') {
+    showToast('⛔ Only Foreman or PM can request rework!');
+    return;
+  }
+  const p = pendingApprovals[idx];
+  setTradeStatus(p.unit, p.trade, 'Progress');
+  addNotification(`Rework requested for Unit ${p.unit} ${p.trade}.`);
+  showToast(`🔄 Rework requested for ${p.trade}`);
+  pendingApprovals.splice(idx, 1);
+  updateApprovalBadge();
+  renderAll();
+}
+function rejectWork(idx) {
+  if (currentUser.role !== 'foreman' && currentUser.role !== 'pm') {
+    showToast('⛔ Only Foreman or PM can reject!');
+    return;
+  }
+  const p = pendingApprovals[idx];
+  setTradeStatus(p.unit, p.trade, 'Blocked');
+  addNotification(`Unit ${p.unit} ${p.trade} rejected.`);
+  showToast(`❌ ${p.trade} on Unit ${p.unit} Rejected`);
+  pendingApprovals.splice(idx, 1);
+  updateApprovalBadge();
+  renderAll();
+}
+
+// ---------- DELAYS ----------
+function renderDelays() {
+  const container = document.getElementById('delayList');
+  if (!delayReports.length) {
+    container.innerHTML = '<p style="color:#94a3b8;">No delays reported</p>';
+    return;
+  }
+  let html = '';
+  delayReports.slice().reverse().forEach(d => {
+    html += `<div style="background:#fef2f2;border-radius:12px;padding:12px 16px;margin-bottom:8px;border-left:4px solid #ef4444;">
+      <div style="display:flex;justify-content:space-between;"><strong>Unit ${d.unit}</strong> <span class="badge badge-blocked">${d.type}</span></div>
+      <p style="font-size:13px;color:#475569;margin:4px 0;">${d.comment}</p>
+      <div style="font-size:12px;color:#94a3b8;">${d.date || 'Today'}</div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function submitDelay() {
+  const unit = document.getElementById('delayUnit').value;
+  const type = document.getElementById('delayType').value;
+  const comment = document.getElementById('delayComment').value;
+  if (!comment) { showToast('Please describe the issue'); return; }
+  delayReports.push({ unit: parseInt(unit), type, comment, date: new Date().toISOString().slice(0,10) });
+  // mark unit blocked for the trade
+  const trade = document.getElementById('compTrade')?.value || 'Painting';
+  setTradeStatus(parseInt(unit), trade, 'Blocked');
+  addNotification(`🚨 Delay reported on Unit ${unit}: ${type}`);
+  showToast(`🚨 Delay reported on Unit ${unit}`);
+  document.getElementById('delayComment').value = '';
+  renderAll();
+}
+
+// ---------- ATTENDANCE ----------
+function renderAttendance() {
+  const container = document.getElementById('attendanceTable');
+  if (!attendance.length) {
+    container.innerHTML = '<p style="color:#94a3b8;">No attendance records</p>';
+    return;
+  }
+  let html = `<table class="attendance-table"><thead><tr><th>Name</th><th>Trade</th><th>Unit</th><th>Time</th><th>Status</th></tr></thead><tbody>`;
+  attendance.forEach(a => {
+    html += `<tr><td>${a.name}</td><td>${a.trade}</td><td>${a.unit}</td><td>${a.time}</td><td><span class="badge ${a.status === 'In' ? 'badge-ready' : 'badge-blocked'}">${a.status}</span></td></tr>`;
+  });
+  html += `</tbody></table>`;
+  container.innerHTML = html;
+}
+
+function checkIn() {
+  const name = document.getElementById('attName').value.trim();
+  const trade = document.getElementById('attTrade').value.trim();
+  const unit = document.getElementById('attUnit').value.trim();
+  if (!name || !trade || !unit) { showToast('Please fill all fields'); return; }
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  attendance.push({ name, trade, unit, time, status: 'In' });
+  showToast(`✅ ${name} checked in`);
+  document.getElementById('attName').value = '';
+  document.getElementById('attTrade').value = '';
+  document.getElementById('attUnit').value = '';
+  renderAttendance();
+}
+function checkOut() {
+  const name = document.getElementById('attName').value.trim();
+  if (!name) { showToast('Enter name to check out'); return; }
+  const record = attendance.find(a => a.name === name && a.status === 'In');
+  if (record) {
+    record.status = 'Out';
+    record.time = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    showToast(`🚪 ${name} checked out`);
+  } else {
+    showToast('No active check-in found for that name');
+  }
+  document.getElementById('attName').value = '';
+  renderAttendance();
+}
+
+// ---------- NOTIFICATIONS ----------
+function renderNotifications() {
+  const container = document.getElementById('notifList');
+  if (!notifications.length) {
+    container.innerHTML = '<p style="color:#94a3b8;">No notifications</p>';
+    return;
+  }
+  let html = '';
+  notifications.forEach((n, i) => {
+    html += `<div class="notif-item" onclick="markNotifRead(${i})">
+      <div class="notif-dot" style="${n.read ? 'background:#cbd5e1;' : ''}"></div>
+      <div><div>${n.text}</div><div class="notif-time">${n.time}</div></div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function markNotifRead(idx) {
+  notifications[idx].read = true;
+  updateNotifBadge();
+  renderNotifications();
+}
+
+// ---------- ANALYTICS ----------
+function renderAnalytics() {
+  // Delay causes chart
+  const causes = {};
+  delayReports.forEach(d => { causes[d.type] = (causes[d.type] || 0) + 1; });
+  const colors = ['#f97316','#ef4444','#eab308','#3b82f6','#22c55e','#8b5cf6'];
+  let html = '';
+  let i = 0;
+  const max = Math.max(...Object.values(causes), 1);
+  for (const [key, val] of Object.entries(causes)) {
+    const pct = Math.round((val / max) * 100);
+    html += `<div class="chart-bar-wrap"><span class="chart-bar-label">${key}</span>
+      <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${pct}%;background:${colors[i % colors.length]};"></div></div>
+      <span class="chart-bar-value">${val}</span></div>`;
+    i++;
+  }
+  document.getElementById('delayChart').innerHTML = html || '<p style="color:#94a3b8;">No delay data</p>';
+
+  // Idle labour chart (simulated)
+  const idleData = { Painters: 12, Tilers: 8, Electricians: 5, Plumbers: 3 };
+  let html2 = '';
+  const maxIdle = Math.max(...Object.values(idleData), 1);
+  for (const [key, val] of Object.entries(idleData)) {
+    const pct = Math.round((val / maxIdle) * 100);
+    html2 += `<div class="chart-bar-wrap"><span class="chart-bar-label">${key}</span>
+      <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${pct}%;background:#3b82f6;"></div></div>
+      <span class="chart-bar-value">${val}h</span></div>`;
+  }
+  document.getElementById('idleChart').innerHTML = html2;
+
+  // stats
+  let ready=0, blocked=0, complete=0;
+  for (let u=1; u<=30; u++) {
+    const color = getUnitColor(u);
+    if (color === 'green') ready++;
+    else if (color === 'red') blocked++;
+    const st = unitStatuses[u] || {};
+    if (trades.every(t => st[t] === 'Approved')) complete++;
+  }
+  document.getElementById('analyticsReady').textContent = ready;
+  document.getElementById('analyticsBlocked').textContent = blocked;
+  document.getElementById('analyticsComplete').textContent = complete;
+}
+
+// ---------- FILES ----------
+function renderFiles() {
+  const container = document.getElementById('fileList');
+  if (!files.length) {
+    container.innerHTML = '<p style="color:#94a3b8;">No files created yet</p>';
+    return;
+  }
+  let html = '';
+  files.forEach((f, i) => {
+    html += `<div class="file-item"><span>📄 ${f.name}</span>
+      <div><button class="btn-outline btn-sm" onclick="deleteFile(${i})" style="padding:4px 14px;">🗑️</button></div></div>`;
+  });
+  container.innerHTML = html;
+}
+
+function addFile() {
+  const name = document.getElementById('fileNameInput').value.trim();
+  if (!name) { showToast('Enter a file name'); return; }
+  files.push({ name, created: new Date().toISOString() });
+  localStorage.setItem('wfp_files', JSON.stringify(files));
+  document.getElementById('fileNameInput').value = '';
+  showToast(`📁 File "${name}" created`);
+  renderFiles();
+}
+function deleteFile(idx) {
+  files.splice(idx, 1);
+  localStorage.setItem('wfp_files', JSON.stringify(files));
+  renderFiles();
+}
+
+// ---------- INIT ----------
+(function() {
+  if (loadUser()) {
+    document.getElementById('rolePicker').style.display = 'none';
+    initApp();
+  } else {
+    document.getElementById('rolePicker').style.display = 'flex';
+  }
+})();
+
+// Close modals on backdrop click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+});
+
+// File input mock
+document.getElementById('compPhoto')?.addEventListener('change', function(e) {
+  if (this.files.length) showToast('📸 Photo attached: ' + this.files[0].name);
+});
+
+console.log('%c🏗️ Workfront Pro v1.0', 'font-size:24px;font-weight:800;color:#f97316;');
+console.log('%cBuilt by T. Phophi — Construction Tech Visionary', 'font-size:16px;font-weight:500;color:#0f172a;');
+console.log('%c👷 "Turning site chaos into clarity."', 'font-size:14px;font-style:italic;color:#64748b;');
+</script>
+</body>
+</html>
